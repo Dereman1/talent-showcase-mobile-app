@@ -1,227 +1,176 @@
-
-import React, { useEffect, useState, useContext } from 'react';
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Image,
-  FlatList,
-  TextInput as RNTextInput,
-  TouchableOpacity,
-} from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Text, Avatar, Card, Button, TextInput, Divider } from 'react-native-paper';
-import { AuthContext } from '../../contexts/AuthContext';
-import api from '../../utils/api';
-import { REACT_APP_API_URL } from '../../constants/env';
-const categoryOptions = ['visual', 'vocal', 'literal'];
-
-const AccountScreen = () => {
-  const { id } = useLocalSearchParams<{ id?: string }>();
-  const router = useRouter();
-  const { user } = useContext(AuthContext);
-
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { Text, TextInput, Button, Card, Avatar, Title, useTheme } from 'react-native-paper';
+import * as ImagePicker from 'expo-image-picker';
+import axios from 'axios';
+import { router } from 'expo-router';
+import { AuthContext } from '@/contexts/AuthContext';
+import { REACT_APP_API_URL } from '@/constants/env';
+const Account = () => {
+  const { user, logout } = useContext(AuthContext);
+  const userId = user?.id;
   const [profile, setProfile] = useState<any>(null);
-  const [posts, setPosts] = useState<any[]>([]);
   const [username, setUsername] = useState('');
   const [bio, setBio] = useState('');
-  const [avatar, setAvatar] = useState<File | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [avatar, setAvatar] = useState<any>(null);
+  const theme = useTheme();
 
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const uid = id || user?.id;
-        const res = await api.get(`/api/users/${uid}`);
+        const res = await axios.get(`${REACT_APP_API_URL}/api/users/profile/${userId}`);
         setProfile(res.data);
         setUsername(res.data.username);
-        setBio(res.data.profile.bio);
-
-        const postsRes = await api.get(`/api/posts/user/${uid}`);
-        setPosts(postsRes.data);
+        setBio(res.data.profile?.bio || '');
       } catch (err) {
-        console.error('Error fetching profile:', err);
+        console.error('Failed to load profile:', err);
       }
     };
 
-    fetchProfile();
-  }, [id, user]);
+    if (userId) fetchProfile();
+  }, [userId]);
+
+  const handleAvatarPick = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      setAvatar(result.assets[0]);
+    }
+  };
 
   const handleUpdate = async () => {
     const formData = new FormData();
     formData.append('username', username);
     formData.append('bio', bio);
-    if (avatar) formData.append('avatar', avatar);
+    if (avatar) {
+      const localUri = avatar.uri;
+      const filename = localUri.split('/').pop() || 'avatar.jpg';
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : `image`;
+
+      formData.append('avatar', {
+        uri: localUri,
+        name: filename,
+        type,
+      } as any);
+    }
 
     try {
-      const res = await api.patch('/api/users/profile', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const res = await axios.patch(
+        `${REACT_APP_API_URL}/api/users/profile`,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
       setProfile(res.data.user);
+      Alert.alert('Success', 'Profile updated');
     } catch (err) {
-      console.error('Update error:', err);
+      console.error('Error updating profile:', err);
+      Alert.alert('Error', 'Failed to update profile');
     }
   };
 
-  const filteredPosts = posts.filter(post => {
-    const matchesCat = !selectedCategory || post.category === selectedCategory;
-    const matchesSearch = !searchTerm || post.title.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesCat && matchesSearch;
-  });
+  const handleLogout = () => {
+    logout();
+    router.replace('/login');
+  };
 
-  if (!profile) return <Text style={{ color: '#000' }}>Loading...</Text>;
+  if (!profile) {
+    return (
+      <View style={styles.container}>
+        <Text style={{ color: 'white', marginTop:24,fontSize:24, fontWeight: "bold" }}>Account</Text>
+      </View>
+    );
+  }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#121212' }}>
-      <Text style={{ color: '#ddd', fontSize: 24, margin: 26 }}>
-Account
-      </Text>
-      <ScrollView contentContainerStyle={styles.container}>
-        {/* Profile Header */}
-        <View style={styles.header}>
+    <ScrollView contentContainerStyle={styles.container}>
+      <Title style={styles.title}>Account</Title>
+
+      <Card style={styles.card}>
+        <Card.Content style={{ alignItems: 'center' }}>
           <Avatar.Image
             size={80}
-            source={
-              profile.profile.avatar
-                ? { uri: `${REACT_APP_API_URL}/${profile.profile.avatar}` }
-                : require('../../assets/images/icon.png')
-            }
+            source={{
+              uri: avatar?.uri
+                ? avatar.uri
+                : profile.profile?.avatar
+                ? `${process.env.EXPO_PUBLIC_API_URL}/${profile.profile.avatar}`
+                : 'https://via.placeholder.com/150',
+            }}
           />
-          <View style={{ marginLeft: 16 }}>
-            <Text variant="titleMedium">{profile.username.toUpperCase()}</Text>
-            <Text variant="bodyMedium">{profile.profile.bio}</Text>
-          </View>
-        </View>
-        {/* Self-profile editable */}
-        {user?.id === profile._id && (
-          <Card style={styles.card}>
-            <Card.Title title="Update Profile" />
-            <Card.Content>
-              <TextInput
-                label="Username"
-                value={username}
-                onChangeText={setUsername}
-                mode="outlined"
-                style={styles.input}
-              />
-              <TextInput
-                label="Bio"
-                value={bio}
-                onChangeText={setBio}
-                multiline
-                numberOfLines={3}
-                mode="outlined"
-                style={styles.input}
-              />
-              <Button
-                icon="image"
-                mode="outlined"
-                onPress={() => {
-                  // Add image picker if desired
-                }}
-                style={{ marginBottom: 16 }}
-              >
-                Upload Avatar
-              </Button>
-              <Button mode="contained" onPress={handleUpdate}>
-                Save Changes
-              </Button>
-              <Divider style={{ marginVertical: 16 }} />
-              <TouchableOpacity onPress={() => router.push('/change-password')}>
-                <Text style={styles.link}>Change Password</Text>
-              </TouchableOpacity>
-            </Card.Content>
-          </Card>
-        )}
-        {/* Post Filters */}
-        {profile.role === 'user' && (
-          <>
-            <Card style={styles.card}>
-              <Card.Title title="Filter Posts" />
-              <Card.Content>
-                <RNTextInput
-                  placeholder="Search posts"
-                  value={searchTerm}
-                  onChangeText={setSearchTerm}
-                  style={styles.input}
-                  placeholderTextColor="#aaa"
-                />
-                <View style={styles.categoryRow}>
-                  {categoryOptions.map(cat => (
-                    <Button
-                      key={cat}
-                      mode={selectedCategory === cat ? 'contained' : 'outlined'}
-                      onPress={() => setSelectedCategory(cat)}
-                      style={styles.categoryBtn}
-                    >
-                      {cat}
-                    </Button>
-                  ))}
-                </View>
-              </Card.Content>
-            </Card>
-            {/* Posts */}
-            <FlatList
-              data={filteredPosts}
-              keyExtractor={item => item._id}
-              renderItem={({ item }) => (
-                <Card style={styles.postCard}>
-                  <Card.Title title={item.title} subtitle={item.category} />
-                  <Card.Content>
-                    <Text>{item.description}</Text>
-                  </Card.Content>
-                </Card>
-              )}
-              ListEmptyComponent={<Text style={{ marginTop: 20 }}>No posts found.</Text>}
-              scrollEnabled={false}
-            />
-          </>
-        )}
-      </ScrollView>
-    </View>
+          <Button onPress={handleAvatarPick} mode="text" textColor="#2196f3" style={{ marginTop: 8 }}>
+            Change Avatar
+          </Button>
+          <Title style={{ color: 'white', marginTop: 4 }}>{profile.username}</Title>
+          <Text style={{ color: 'gray' }}>{profile.profile?.bio}</Text>
+        </Card.Content>
+      </Card>
+
+      <Card style={styles.card}>
+        <Card.Content>
+          <TextInput
+            label="Username"
+            value={username}
+            onChangeText={setUsername}
+            mode="outlined"
+            style={styles.input}
+          />
+          <TextInput
+            label="Bio"
+            value={bio}
+            onChangeText={setBio}
+            mode="outlined"
+            multiline
+            numberOfLines={3}
+            style={styles.input}
+          />
+          <Button mode="contained" onPress={handleUpdate} style={{ marginTop: 12 }}>
+            Update Profile
+          </Button>
+        </Card.Content>
+      </Card>
+
+      <Button mode="outlined" onPress={handleLogout} style={styles.logout}>
+        Logout
+      </Button>
+    </ScrollView>
   );
 };
 
-export default AccountScreen;
+export default Account;
 
 const styles = StyleSheet.create({
   container: {
+    flexGrow: 1,
     padding: 16,
-    paddingBottom: 64,
     backgroundColor: '#121212',
   },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
+  title: {
+    color: 'white',
+    fontSize: 24,
+    marginBottom: 16,
+    fontWeight: 'bold',
   },
   card: {
-    backgroundColor: '#1e1e1e',
-    marginBottom: 16,
+    marginBottom: 20,
+    backgroundColor: '#1E1E1E',
+    borderRadius: 12,
   },
   input: {
     marginBottom: 12,
-    backgroundColor: '#1e1e1e',
-    color: '#fff',
+    backgroundColor: '#1E1E1E',
   },
-  link: {
-    color: '#1976d2',
-    textAlign: 'center',
-    marginTop: 8,
-  },
-  categoryRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 8,
-  },
-  categoryBtn: {
-    marginRight: 8,
-    marginTop: 8,
-  },
-  postCard: {
-    backgroundColor: '#1e1e1e',
-    marginBottom: 12,
+  logout: {
+    marginTop: 16,
+    borderColor: '#f44336',
+    borderWidth: 1,
   },
 });
