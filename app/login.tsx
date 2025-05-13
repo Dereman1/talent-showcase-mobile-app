@@ -1,40 +1,32 @@
-// app/register.tsx
-import { Link } from 'expo-router';
+// app/login.tsx
 import { FC, useState } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { TextInput, Button, Text, Card } from 'react-native-paper';
+import { Link } from 'expo-router';
 
-const HomeScreen: FC = () => {
+const LoginScreen: FC = () => {
   const [email, setEmail] = useState('');
-  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
 
-  const handleRegister = () => {
-    if (!email || !username || !password) {
+  const handleLogin = () => {
+    if (!email || !password) {
       Alert.alert("Error", "Please fill in all fields.");
       return;
     }
-    // Handle registration logic here
-    console.log("Registering...");
+    // Handle login logic here
+    console.log("Logging in...");
   };
 
   return (
     <View style={styles.container}>
       <Card style={styles.card}>
-        <Card.Title title="Register" titleStyle={styles.cardTitle} />
+        <Card.Title title="Login" titleStyle={styles.cardTitle} />
         <Card.Content>
           <TextInput
             label="Email"
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
-            mode="outlined"
-            style={styles.input}
-          />
-          <TextInput
-            label="Username"
-            value={username}
-            onChangeText={setUsername}
             mode="outlined"
             style={styles.input}
           />
@@ -46,18 +38,24 @@ const HomeScreen: FC = () => {
             mode="outlined"
             style={styles.input}
           />
-          <Button mode="contained" onPress={handleRegister} style={styles.button}>
-            Register
+          <Button mode="contained" onPress={handleLogin} style={styles.button}>
+            Login
           </Button>
         </Card.Content>
-         <Card.Actions style={styles.cardActions}>
-                  <Text variant="bodyMedium" style={styles.registerText}>
-                     have you an account?{' '}
-                  </Text>
-                  <Link href="/login" style={styles.registerLink}>
-                    Login
-                  </Link>
-                </Card.Actions>
+        <Card.Actions style={styles.cardActions}>
+          <Text variant="bodyMedium" style={styles.registerText}>
+            Don't have an account?{' '}
+          </Text>
+          <Link href="/" style={styles.registerLink}>
+            Register
+          </Link>
+        </Card.Actions>
+        <Card.Actions style={styles.cardActions}>
+          
+          <Link href="/" style={styles.registerLink}>
+            Forgot Password
+          </Link>
+        </Card.Actions>
       </Card>
     </View>
   );
@@ -103,4 +101,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default HomeScreen;
+export default LoginScreen;
