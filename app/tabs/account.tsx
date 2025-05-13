@@ -1,4 +1,3 @@
-// app/(tabs)/account/index.tsx
 
 import React, { useEffect, useState, useContext } from 'react';
 import {
@@ -14,7 +13,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Text, Avatar, Card, Button, TextInput, Divider } from 'react-native-paper';
 import { AuthContext } from '../../contexts/AuthContext';
 import api from '../../utils/api';
-
+import { REACT_APP_API_URL } from '../../constants/env';
 const categoryOptions = ['visual', 'vocal', 'literal'];
 
 const AccountScreen = () => {
@@ -71,114 +70,116 @@ const AccountScreen = () => {
     return matchesCat && matchesSearch;
   });
 
-  if (!profile) return null;
+  if (!profile) return <Text style={{ color: '#000' }}>Loading...</Text>;
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      {/* Profile Header */}
-      <View style={styles.header}>
-        <Avatar.Image
-          size={80}
-          source={
-            profile.profile.avatar
-              ? { uri: `${process.env.EXPO_PUBLIC_API_URL}/${profile.profile.avatar}` }
-              : require('../../assets/images/icon.png')
-          }
-        />
-        <View style={{ marginLeft: 16 }}>
-          <Text variant="titleMedium">{profile.username.toUpperCase()}</Text>
-          <Text variant="bodyMedium">{profile.profile.bio}</Text>
+    <View style={{ flex: 1, backgroundColor: '#121212' }}>
+      <Text style={{ color: '#ddd', fontSize: 24, margin: 26 }}>
+Account
+      </Text>
+      <ScrollView contentContainerStyle={styles.container}>
+        {/* Profile Header */}
+        <View style={styles.header}>
+          <Avatar.Image
+            size={80}
+            source={
+              profile.profile.avatar
+                ? { uri: `${REACT_APP_API_URL}/${profile.profile.avatar}` }
+                : require('../../assets/images/icon.png')
+            }
+          />
+          <View style={{ marginLeft: 16 }}>
+            <Text variant="titleMedium">{profile.username.toUpperCase()}</Text>
+            <Text variant="bodyMedium">{profile.profile.bio}</Text>
+          </View>
         </View>
-      </View>
-
-      {/* Self-profile editable */}
-      {user?.id === profile._id && (
-        <Card style={styles.card}>
-          <Card.Title title="Update Profile" />
-          <Card.Content>
-            <TextInput
-              label="Username"
-              value={username}
-              onChangeText={setUsername}
-              mode="outlined"
-              style={styles.input}
-            />
-            <TextInput
-              label="Bio"
-              value={bio}
-              onChangeText={setBio}
-              multiline
-              numberOfLines={3}
-              mode="outlined"
-              style={styles.input}
-            />
-            <Button
-              icon="image"
-              mode="outlined"
-              onPress={() => {
-                // Add image picker if desired
-              }}
-              style={{ marginBottom: 16 }}
-            >
-              Upload Avatar
-            </Button>
-            <Button mode="contained" onPress={handleUpdate}>
-              Save Changes
-            </Button>
-            <Divider style={{ marginVertical: 16 }} />
-            <TouchableOpacity onPress={() => router.push('/change-password')}>
-              <Text style={styles.link}>Change Password</Text>
-            </TouchableOpacity>
-          </Card.Content>
-        </Card>
-      )}
-
-      {/* Post Filters */}
-      {profile.role === 'user' && (
-        <>
+        {/* Self-profile editable */}
+        {user?.id === profile._id && (
           <Card style={styles.card}>
-            <Card.Title title="Filter Posts" />
+            <Card.Title title="Update Profile" />
             <Card.Content>
-              <RNTextInput
-                placeholder="Search posts"
-                value={searchTerm}
-                onChangeText={setSearchTerm}
+              <TextInput
+                label="Username"
+                value={username}
+                onChangeText={setUsername}
+                mode="outlined"
                 style={styles.input}
-                placeholderTextColor="#aaa"
               />
-              <View style={styles.categoryRow}>
-                {categoryOptions.map(cat => (
-                  <Button
-                    key={cat}
-                    mode={selectedCategory === cat ? 'contained' : 'outlined'}
-                    onPress={() => setSelectedCategory(cat)}
-                    style={styles.categoryBtn}
-                  >
-                    {cat}
-                  </Button>
-                ))}
-              </View>
+              <TextInput
+                label="Bio"
+                value={bio}
+                onChangeText={setBio}
+                multiline
+                numberOfLines={3}
+                mode="outlined"
+                style={styles.input}
+              />
+              <Button
+                icon="image"
+                mode="outlined"
+                onPress={() => {
+                  // Add image picker if desired
+                }}
+                style={{ marginBottom: 16 }}
+              >
+                Upload Avatar
+              </Button>
+              <Button mode="contained" onPress={handleUpdate}>
+                Save Changes
+              </Button>
+              <Divider style={{ marginVertical: 16 }} />
+              <TouchableOpacity onPress={() => router.push('/change-password')}>
+                <Text style={styles.link}>Change Password</Text>
+              </TouchableOpacity>
             </Card.Content>
           </Card>
-
-          {/* Posts */}
-          <FlatList
-            data={filteredPosts}
-            keyExtractor={item => item._id}
-            renderItem={({ item }) => (
-              <Card style={styles.postCard}>
-                <Card.Title title={item.title} subtitle={item.category} />
-                <Card.Content>
-                  <Text>{item.description}</Text>
-                </Card.Content>
-              </Card>
-            )}
-            ListEmptyComponent={<Text style={{ marginTop: 20 }}>No posts found.</Text>}
-            scrollEnabled={false}
-          />
-        </>
-      )}
-    </ScrollView>
+        )}
+        {/* Post Filters */}
+        {profile.role === 'user' && (
+          <>
+            <Card style={styles.card}>
+              <Card.Title title="Filter Posts" />
+              <Card.Content>
+                <RNTextInput
+                  placeholder="Search posts"
+                  value={searchTerm}
+                  onChangeText={setSearchTerm}
+                  style={styles.input}
+                  placeholderTextColor="#aaa"
+                />
+                <View style={styles.categoryRow}>
+                  {categoryOptions.map(cat => (
+                    <Button
+                      key={cat}
+                      mode={selectedCategory === cat ? 'contained' : 'outlined'}
+                      onPress={() => setSelectedCategory(cat)}
+                      style={styles.categoryBtn}
+                    >
+                      {cat}
+                    </Button>
+                  ))}
+                </View>
+              </Card.Content>
+            </Card>
+            {/* Posts */}
+            <FlatList
+              data={filteredPosts}
+              keyExtractor={item => item._id}
+              renderItem={({ item }) => (
+                <Card style={styles.postCard}>
+                  <Card.Title title={item.title} subtitle={item.category} />
+                  <Card.Content>
+                    <Text>{item.description}</Text>
+                  </Card.Content>
+                </Card>
+              )}
+              ListEmptyComponent={<Text style={{ marginTop: 20 }}>No posts found.</Text>}
+              scrollEnabled={false}
+            />
+          </>
+        )}
+      </ScrollView>
+    </View>
   );
 };
 

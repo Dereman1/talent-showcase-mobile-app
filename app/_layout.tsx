@@ -6,7 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 export default function Layout() {
   return (
     <PaperProvider theme={DarkTheme}>
-      <StatusBar style="light" backgroundColor="#121212" />
+      <StatusBar style="light" backgroundColor="#000" />
       <Slot />
     </PaperProvider>
   );
