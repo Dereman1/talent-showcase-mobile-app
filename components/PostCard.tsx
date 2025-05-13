@@ -1,15 +1,13 @@
 import React, { useContext } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
-import { Button, Avatar, Divider, Card, IconButton } from 'react-native-paper';
+import { View, Text, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
+import { Button, Avatar, Divider, Card } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
-
-// Icon imports
-import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { AuthContext } from '@/contexts/AuthContext';
 import api from '@/utils/api';
-
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '@/types/navigation';
+import { REACT_APP_API_URL } from '@/constants/env';
+import { useRouter } from 'expo-router';
 
 interface PostCardProps {
   post: any;
@@ -19,11 +17,12 @@ interface PostCardProps {
 }
 
 const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, showActions = true, evaluation = null }) => {
-  const { user } = useContext(AuthContext);
+  const { user, } = useContext(AuthContext);
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
+const router = useRouter();
 
-  // Handle Like functionality
   const handleLike = async () => {
+    if (!user) return Alert.alert('Login Required', 'Please login to like posts.');
     try {
       const response = await api.post(`/api/posts/${post._id}/like`);
       onUpdate?.(response.data);
@@ -32,9 +31,16 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, showActions = true,
     }
   };
 
+  const handleComment = () => {
+    if (!user) return Alert.alert('Login Required', 'Please login to comment.');
+    navigation.navigate('Post', { postId: post._id });
+  };
+
   const avatarUrl = post.user?.profile?.avatar
-    ? `${process.env.REACT_APP_API_URL}/${post.user.profile.avatar}`
-    : '/assets/default-avatar.png';
+    ? `${REACT_APP_API_URL}/${post.user.profile.avatar}`
+    : 'https://via.placeholder.com/40';
+
+  const fileUrl = `${REACT_APP_API_URL}/${post.file}`;
 
   return (
     <Card style={styles.card}>
@@ -42,9 +48,14 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, showActions = true,
         <Avatar.Image size={40} source={{ uri: avatarUrl }} />
         <View style={styles.userInfo}>
           <Text style={styles.username}>{post.user.username}</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Profile', { userId: post.user._id })}>
-            <Text style={styles.viewProfile}>View Profile</Text>
-          </TouchableOpacity>
+          <TouchableOpacity onPress={() => {
+  if (post.user._id === user?._id) {
+    router.push('/tabs/account');
+  } 
+}}>
+  <Text style={styles.viewProfile}>View Profile</Text>
+</TouchableOpacity>
+
         </View>
       </View>
 
@@ -61,9 +72,9 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, showActions = true,
       {post.file && (
         <View style={styles.media}>
           {post.file.endsWith('.mp3') || post.file.endsWith('.wav') ? (
-            <audio src={`${process.env.REACT_APP_API_URL}/${post.file}`} controls />
+            <Text style={styles.audioPlaceholder}>🎧 Audio file (open post to play)</Text>
           ) : (
-            <Image source={{ uri: `${process.env.REACT_APP_API_URL}/${post.file}` }} style={styles.mediaImage} />
+            <Image source={{ uri: fileUrl }} style={styles.mediaImage} />
           )}
         </View>
       )}
@@ -71,22 +82,25 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, showActions = true,
       {showActions && (
         <View style={styles.actions}>
           <Button
-            icon="thumb-up"
-            mode="text"
-            onPress={handleLike}
-            disabled={!user}
-            style={styles.likeButton}
-          >
-            {post.likes.length} Likes
-          </Button>
-          <Button
-            icon="comment"
-            mode="text"
-            onPress={() => navigation.navigate('Post', { postId: post._id })}
-            disabled={!user}
-          >
-            Comments
-          </Button>
+  icon="thumb-up"
+  mode="contained-tonal"
+  onPress={handleLike}
+  style={styles.actionButton}
+  textColor="#2196f3"
+>
+  {post.likes.length} Likes
+</Button>
+
+<Button
+  icon="comment"
+  mode="contained-tonal"
+  onPress={handleComment}
+  style={styles.actionButton}
+  textColor="#2196f3"
+>
+  Comments
+</Button>
+
         </View>
       )}
 
@@ -104,7 +118,8 @@ const styles = StyleSheet.create({
   card: {
     marginBottom: 16,
     padding: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#1e1e1e',
+    borderRadius: 12,
   },
   header: {
     flexDirection: 'row',
@@ -117,22 +132,24 @@ const styles = StyleSheet.create({
   username: {
     fontSize: 16,
     fontWeight: 'bold',
+    color: '#ffffff',
   },
   viewProfile: {
     fontSize: 12,
-    color: '#007AFF',
+    color: '#90caf9',
   },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
+    color: '#ffffff',
     marginBottom: 8,
   },
   content: {
     fontSize: 14,
-    color: '#555',
+    color: '#cfcfcf',
   },
   seeMore: {
-    color: '#007AFF',
+    color: '#64b5f6',
   },
   media: {
     marginTop: 12,
@@ -142,26 +159,31 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 200,
     resizeMode: 'contain',
+    borderRadius: 8,
+  },
+  audioPlaceholder: {
+    color: '#cccccc',
+    fontStyle: 'italic',
   },
   actions: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 8,
+    justifyContent: 'space-around',
+    marginTop: 12,
   },
-  likeButton: {
+  actionButton: {
     flex: 1,
-    textAlign: 'left',
+    marginHorizontal: 4,
   },
   evaluation: {
     marginTop: 12,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#ddd',
+    borderTopColor: '#444',
   },
   score: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: 'green',
+    color: '#81c784',
   },
 });
 
