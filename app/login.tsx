@@ -17,23 +17,19 @@ const LoginScreen: FC = () => {
   // const { login } = useContext(AuthContext);
 
   const handleLogin = async () => {
-    setErrorMsg('');
-    if (!email || !password) {
+  if (!email || !password) {
     Alert.alert('Error', 'Please fill in all fields.');
-      return;
-    }
+    return;
+  }
 
-    try {
-      // Replace with real API call
-      // const response = await axios.post('/api/auth/login', { email, password });
-      // login(response.data.user, response.data.token);
-      // await AsyncStorage.setItem('token', response.data.token);
-      // router.replace('/');
-      console.log('Logging in...');
-    } catch (err: any) {
-      setErrorMsg(err?.response?.data?.message || 'Login failed');
-    }
-  };
+  try {
+    // Simulate login
+    router.replace('/tabs/home'); // Not /tabs/home!
+  } catch (err) {
+    setErrorMsg('Login failed');
+  }
+};
+
 
   return (
     <View style={styles.container}>

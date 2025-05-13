@@ -1,4 +1,3 @@
-// app/_layout.tsx
 import { Slot } from 'expo-router';
 import { PaperProvider } from 'react-native-paper';
 import { DarkTheme } from '../constants/theme';
@@ -11,4 +10,4 @@ export default function Layout() {
       <Slot />
     </PaperProvider>
   );
-}
+} 
