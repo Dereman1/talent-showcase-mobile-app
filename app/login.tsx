@@ -73,7 +73,7 @@ const LoginScreen: FC = () => {
 
           <Text
             style={[styles.link, { textAlign: 'center', marginTop: 8 }]}
-            onPress={() => router.push('/')}
+            onPress={() => router.push('/forgot-password')}
           >
             Forgot password?
           </Text>
