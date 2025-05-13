@@ -1,35 +1,49 @@
-import { FC, useState, useContext } from 'react';
+import React, { FC, useState, useContext } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { TextInput, Button, Text, Card } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-// import AsyncStorage from '@react-native-async-storage/async-storage';
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AuthContext } from '../contexts/AuthContext'; // Adjust path if needed
+import { REACT_APP_API_URL } from '@/constants/env';
 
-// Replace with your actual AuthContext if needed
-const AuthContext = {
-  login: (_user: any, _token: string) => {},
-};
 
 const LoginScreen: FC = () => {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
-  // const { login } = useContext(AuthContext);
+  const { login } = useContext(AuthContext);
 
   const handleLogin = async () => {
-  if (!email || !password) {
-    Alert.alert('Error', 'Please fill in all fields.');
-    return;
-  }
+    if (!email || !password) {
+      Alert.alert('Error', 'Please fill in all fields.');
+      return;
+    }
 
-  try {
-    // Simulate login
-    router.replace('/tabs/home'); // Not /tabs/home!
-  } catch (err) {
-    setErrorMsg('Login failed');
-  }
-};
+    try {
+      const response = await axios.post(`${REACT_APP_API_URL}/api/auth/login`, {
+        email,
+        password,
+      });
 
+      const { user, token } = response.data;
+
+      // Optional: Store token in AsyncStorage
+      await AsyncStorage.setItem('token', token);
+      await AsyncStorage.setItem('user', JSON.stringify(user));
+
+      // Call login function from context
+      login(user, token);
+
+      // Navigate to home tab
+      router.replace('/tabs/home');
+    } catch (err: any) {
+      console.log('Login error:', err);
+      const message = err.response?.data?.message || 'Login failed';
+      setErrorMsg(message);
+    }
+  };
 
   return (
     <View style={styles.container}>
