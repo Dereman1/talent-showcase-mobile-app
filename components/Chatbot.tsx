@@ -14,7 +14,7 @@ import {
 } from 'react-native';
 import { FAB } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
-import axios from 'axios';
+import api from '@/utils/api';
 
 type Message = {
   sender: 'user' | 'bot';
@@ -36,12 +36,13 @@ const Chatbot: React.FC = () => {
     setLoading(true);
 
     try {
-      const res = await axios.post('https://your-api.com/api/chatbot/chat', {
+      const res = await api.post('/api/chatbot/chat', {
         message: input,
       });
       const botMessage: Message = { sender: 'bot', text: res.data.reply || 'No response.' };
       setMessages(prev => [...prev, botMessage]);
     } catch (error) {
+      console.error('Error sending message:', error);
       setMessages(prev => [...prev, { sender: 'bot', text: 'Error responding...' }]);
     } finally {
       setLoading(false);
