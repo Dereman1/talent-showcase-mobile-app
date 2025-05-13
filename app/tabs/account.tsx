@@ -2,10 +2,10 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { View, StyleSheet, ScrollView, Alert } from 'react-native';
 import { Text, TextInput, Button, Card, Avatar, Title, useTheme } from 'react-native-paper';
 import * as ImagePicker from 'expo-image-picker';
-import axios from 'axios';
 import { router } from 'expo-router';
 import { AuthContext } from '@/contexts/AuthContext';
 import { REACT_APP_API_URL } from '@/constants/env';
+import api from '@/utils/api';
 const Account = () => {
   const { user, logout } = useContext(AuthContext);
   const userId = user?.id;
@@ -18,7 +18,7 @@ const Account = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await axios.get(`${REACT_APP_API_URL}/api/users/${userId || user?.id}`);
+        const res = await api.get(`${REACT_APP_API_URL}/api/users/${userId || user?.id}`);
         
         setProfile(res.data);
         setUsername(res.data.username);
@@ -61,7 +61,7 @@ const Account = () => {
     }
 
     try {
-      const res = await axios.patch(
+      const res = await api.patch(
         `${REACT_APP_API_URL}/api/users/profile`,
         formData,
         {
@@ -139,9 +139,15 @@ const Account = () => {
         </Card.Content>
       </Card>
 
-      <Button mode="outlined" onPress={handleLogout} style={styles.logout}>
-        Logout
-      </Button>
+      <Button
+  mode="contained"
+  onPress={handleLogout}
+  style={[styles.logout, { backgroundColor: '#f44336' }]}
+  textColor="white"
+>
+  Logout
+</Button>
+
     </ScrollView>
   );
 };
@@ -169,9 +175,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     backgroundColor: '#1E1E1E',
   },
-  logout: {
-    marginTop: 16,
-    borderColor: '#f44336',
-    borderWidth: 1,
-  },
+ logout: {
+  marginTop: 16,
+  borderRadius: 48,
+},
+
 });
