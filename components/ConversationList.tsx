@@ -56,7 +56,7 @@ const ConversationList: React.FC<Props> = ({ conversations, onSelect }) => {
           source={
             otherUser?.profile?.avatar
               ? { uri: otherUser.profile.avatar }
-              : require('../assets/default-avatar.png') // fallback image
+              : require('../assets/images/icon.png') // fallback image
           }
           style={styles.avatar}
         />

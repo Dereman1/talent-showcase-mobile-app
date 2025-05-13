@@ -96,7 +96,7 @@ const MessageButton: React.FC<Props> = ({ onNewConversation }) => {
                     source={
                       item.profile?.avatar
                         ? { uri: item.profile.avatar }
-                        : require('../assets/default-avatar.png')
+                        : require('../assets/images/icon.png')
                     }
                     style={styles.avatar}
                   />

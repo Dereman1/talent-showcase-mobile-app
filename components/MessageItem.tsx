@@ -27,7 +27,7 @@ const MessageItem: React.FC<Props> = ({ message, userId }) => {
         source={
           message.sender?.profile?.avatar
             ? { uri: message.sender.profile.avatar }
-            : require('../assets/default-avatar.png')
+            : require('../assets/images/icon.png')
         }
         style={styles.avatar}
       />

@@ -157,6 +157,7 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 24,
     marginBottom: 16,
+    marginTop: 16,
   },
   messageList: {
     paddingBottom: 16,
