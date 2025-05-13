@@ -4,6 +4,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { PaperProvider } from 'react-native-paper';
 import { DarkTheme } from '@/constants/theme';
 import * as SystemUI from 'expo-system-ui';
+import Chatbot from '@/components/Chatbot';
 
 export default function TabsLayout() {
   useEffect(() => {
@@ -13,6 +14,7 @@ export default function TabsLayout() {
 
   return (
     <PaperProvider theme={DarkTheme}>
+      <Chatbot />
       <Tabs
         screenOptions={{
           headerShown: false,
