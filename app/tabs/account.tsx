@@ -18,7 +18,8 @@ const Account = () => {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await axios.get(`${REACT_APP_API_URL}/api/users/profile/${userId}`);
+        const res = await axios.get(`${REACT_APP_API_URL}/api/users/${userId || user?.id}`);
+        
         setProfile(res.data);
         setUsername(res.data.username);
         setBio(res.data.profile?.bio || '');
@@ -102,7 +103,7 @@ const Account = () => {
               uri: avatar?.uri
                 ? avatar.uri
                 : profile.profile?.avatar
-                ? `${process.env.EXPO_PUBLIC_API_URL}/${profile.profile.avatar}`
+                ? `${REACT_APP_API_URL}/${profile.profile.avatar}`
                 : 'https://via.placeholder.com/150',
             }}
           />
