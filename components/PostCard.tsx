@@ -8,6 +8,7 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { RootStackParamList } from '@/types/navigation';
 import { REACT_APP_API_URL } from '@/constants/env';
 import { useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 
 interface PostCardProps {
   post: any;
@@ -20,6 +21,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, showActions = true,
   const { user } = useContext(AuthContext);
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const router = useRouter();
+const { id: postId } = useLocalSearchParams();
 
   // Handle Like Action
   const handleLike = async () => {
@@ -39,7 +41,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, showActions = true,
   // Handle Comment Action
   const handleComment = () => {
     if (!user) return Alert.alert('Login Required', 'Please login to comment.');
-    navigation.navigate('Post', { postId: post._id });
+    router.push({ pathname: '/post/[id]', params: { id: post._id } });
   };
 
   // Avatar and Username
