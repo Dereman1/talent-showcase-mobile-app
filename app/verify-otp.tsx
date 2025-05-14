@@ -2,7 +2,8 @@ import { FC, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { TextInput, Button, Card, Text } from 'react-native-paper';
 import { useRouter } from 'expo-router';
-// import AsyncStorage from '@react-native-async-storage/async-storage';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from '@/utils/api';
 
 const VerifyOtpScreen: FC = () => {
   const [otp, setOtp] = useState('');
@@ -14,24 +15,22 @@ const VerifyOtpScreen: FC = () => {
     setError('');
     setSuccess('');
     try {
-    //   const token = await AsyncStorage.getItem('token');
-    //   const res = await fetch(`${process.env.EXPO_PUBLIC_API_BASE}/api/auth/verify-otp`, {
-    //     method: 'POST',
-    //     headers: {
-    //       'Content-Type': 'application/json',
-    //       Authorization: `Bearer ${token}`,
-    //     },
-    //     body: JSON.stringify({ otp }),
-    //   });
+      const token = await AsyncStorage.getItem('token');
+      const res = await api.post(
+        `/api/auth/verify-otp`,
+        { otp },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    //   const data = await res.json();
-
-    //   if (!res.ok) throw new Error(data.message || 'Invalid OTP');
-
-    //   setSuccess(data.message);
-    //   setTimeout(() => router.replace('/login'), 1500);
+      setSuccess(res.data.message);
+      setTimeout(() => router.replace('/login'), 1500);
     } catch (err: any) {
-      setError(err.message || 'Failed to verify OTP');
+      console.error('Verification error:', err);
+      setError(err.response?.data?.message || 'Failed to verify OTP');
     }
   };
 
@@ -39,21 +38,21 @@ const VerifyOtpScreen: FC = () => {
     setError('');
     setSuccess('');
     try {
-    //   const token = await AsyncStorage.getItem('token');
-    //   const res = await fetch(`${process.env.EXPO_PUBLIC_API_BASE}/api/auth/resend-otp`, {
-    //     method: 'POST',
-    //     headers: {
-    //       Authorization: `Bearer ${token}`,
-    //     },
-    //   });
+      const token = await AsyncStorage.getItem('token');
+      const res = await api.post(
+        `/api/auth/resend-otp`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-    //   const data = await res.json();
-
-    //   if (!res.ok) throw new Error(data.message || 'Failed to resend OTP');
-
-    //   setSuccess(data.message);
+      setSuccess(res.data.message);
     } catch (err: any) {
-      setError(err.message || 'Error resending OTP');
+      console.error('Resend error:', err);
+      setError(err.response?.data?.message || 'Error resending OTP');
     }
   };
 

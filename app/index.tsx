@@ -2,6 +2,8 @@ import { FC, useState } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { TextInput, Button, Text, Card } from 'react-native-paper';
 import { useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import api from '@/utils/api';
 
 const HomeScreen: FC = () => {
   const router = useRouter();
@@ -10,22 +12,30 @@ const HomeScreen: FC = () => {
   const [password, setPassword] = useState('');
 
   const handleRegister = async () => {
-    if (!username || !email || !password) {
-      Alert.alert('Error', 'Please fill in all fields.');
-      return;
-    }
+  if (!username || !email || !password) {
+    Alert.alert('Error', 'Please fill in all fields.');
+    return;
+  }
 
-    try {
-      // Replace with your API call
-      // const res = await axios.post('/api/auth/register', { username, email, password });
-      // AsyncStorage.setItem('token', res.data.token);
-      // router.push('/verify-otp');
-      console.log('Registering...');
-    } catch (err) {
-      console.error('Error registering:', err);
-      Alert.alert('Error', 'Registration failed.');
-    }
-  };
+  try {
+    const res = await api.post('/api/auth/register', {
+      username,
+      email,
+      password,
+    });
+
+    // Save the token to AsyncStorage
+    await AsyncStorage.setItem('token', res.data.token);
+
+    // Navigate to OTP verification screen
+    router.push('/verify-otp');
+  } catch (err) {
+    console.error('Error registering:', err);
+    Alert.alert('Error', 'Registration failed. Please try again.');
+  }
+};
+
+
 
   return (
     <View style={styles.container}>

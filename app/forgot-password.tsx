@@ -2,6 +2,7 @@ import { FC, useState } from 'react';
 import { View, StyleSheet, Alert } from 'react-native';
 import { TextInput, Button, Text, Card } from 'react-native-paper';
 import { useRouter } from 'expo-router';
+import api from '@/utils/api';
 
 const ForgotPasswordScreen: FC = () => {
   const router = useRouter();
@@ -19,9 +20,9 @@ const ForgotPasswordScreen: FC = () => {
     }
 
     try {
-      // Replace with your actual API call
-      // const res = await axios.post('/api/auth/forgot-password', { email });
-      // setSuccessMsg(res.data.message);
+      
+      const res = await api.post('/api/auth/forgot-password', { email });
+      setSuccessMsg(res.data.message);
       console.log('Sending reset link...');
       setSuccessMsg('Reset link sent successfully');
     } catch (err: any) {

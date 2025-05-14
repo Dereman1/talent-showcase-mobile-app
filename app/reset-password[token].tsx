@@ -2,6 +2,7 @@ import { FC, useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
 import { TextInput, Button, Card, Text } from 'react-native-paper';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import api from '@/utils/api';
 
 const ResetPasswordScreen: FC = () => {
   const router = useRouter();
@@ -21,9 +22,7 @@ const ResetPasswordScreen: FC = () => {
     }
 
     try {
-      // Replace with your actual API logic
-      // await axios.post(`/api/auth/reset-password/${token}`, { newPassword });
-      console.log('Resetting password for token:', token);
+      await api.post(`/api/auth/reset-password/${token}`, { newPassword });
       setSuccessMsg('Password reset successful');
 
       setTimeout(() => {
