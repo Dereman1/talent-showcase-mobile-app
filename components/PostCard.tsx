@@ -17,25 +17,32 @@ interface PostCardProps {
 }
 
 const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, showActions = true, evaluation = null }) => {
-  const { user, } = useContext(AuthContext);
+  const { user } = useContext(AuthContext);
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-const router = useRouter();
+  const router = useRouter();
 
+  // Handle Like Action
   const handleLike = async () => {
     if (!user) return Alert.alert('Login Required', 'Please login to like posts.');
     try {
       const response = await api.post(`/api/posts/${post._id}/like`);
-      onUpdate?.(response.data);
+      // Update the post with the new data, keeping the user info intact
+      onUpdate?.({
+        ...response.data,
+        user: post.user, // Ensuring that the post user info is preserved
+      });
     } catch (err) {
       console.error('Error liking post:', err);
     }
   };
 
+  // Handle Comment Action
   const handleComment = () => {
     if (!user) return Alert.alert('Login Required', 'Please login to comment.');
     navigation.navigate('Post', { postId: post._id });
   };
 
+  // Avatar and Username
   const avatarUrl = post.user?.profile?.avatar
     ? `${REACT_APP_API_URL}/${post.user.profile.avatar}`
     : 'https://via.placeholder.com/40';
@@ -48,21 +55,20 @@ const router = useRouter();
         <Avatar.Image size={40} source={{ uri: avatarUrl }} />
         <View style={styles.userInfo}>
           <Text style={styles.username}>{post.user.username}</Text>
-        <TouchableOpacity
-          onPress={() => {
-            if (post.user?.id === user?.id) {
-              router.push('/tabs/account');
-            } else {
-              router.push({
-                pathname: '/profile/[id]',
-                params: { id: post.user._id },
-              });
-            }
-          }}
-        >
-          <Text style={styles.viewProfile}>View Profile</Text>
-        </TouchableOpacity>
-
+          <TouchableOpacity
+            onPress={() => {
+              if (post.user?.id === user?.id) {
+                router.push('/tabs/account');
+              } else {
+                router.push({
+                  pathname: '/profile/[id]',
+                  params: { id: post.user._id },
+                });
+              }
+            }}
+          >
+            <Text style={styles.viewProfile}>View Profile</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -89,25 +95,24 @@ const router = useRouter();
       {showActions && (
         <View style={styles.actions}>
           <Button
-  icon="thumb-up"
-  mode="contained-tonal"
-  onPress={handleLike}
-  style={styles.actionButton}
-  textColor="#2196f3"
->
-  {post.likes.length} Likes
-</Button>
+            icon="thumb-up"
+            mode="contained-tonal"
+            onPress={handleLike}
+            style={styles.actionButton}
+            textColor="#2196f3"
+          >
+            {post.likes.length} Likes
+          </Button>
 
-<Button
-  icon="comment"
-  mode="contained-tonal"
-  onPress={handleComment}
-  style={styles.actionButton}
-  textColor="#2196f3"
->
-  Comments
-</Button>
-
+          <Button
+            icon="comment"
+            mode="contained-tonal"
+            onPress={handleComment}
+            style={styles.actionButton}
+            textColor="#2196f3"
+          >
+            Comments
+          </Button>
         </View>
       )}
 
