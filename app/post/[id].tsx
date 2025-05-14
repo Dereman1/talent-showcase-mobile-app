@@ -1,10 +1,12 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { View, ScrollView, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import { View, ScrollView, StyleSheet, Image } from 'react-native';
 import { Text, TextInput, Button, Card, Appbar } from 'react-native-paper';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { AuthContext } from '@/contexts/AuthContext';
 import api from '@/utils/api';
 import PostCard from '@/components/PostCard';
+import { Video } from 'expo-av'; // ✅ ADD THIS
+import { REACT_APP_API_URL } from '@/constants/env'; // ✅ ADD THIS
 
 const PostDetail: React.FC = () => {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -50,9 +52,38 @@ const PostDetail: React.FC = () => {
 
   if (!post) return <Text style={styles.loadingText}>Loading...</Text>;
 
+  // ✅ Render audio/video if file is present
+  const renderMedia = () => {
+    if (!post?.file) return null;
+
+    const mediaUri = `${REACT_APP_API_URL}/${post.file}`;
+    const isAudio = post.file.endsWith('.mp3') || post.file.endsWith('.wav');
+    const isVideo = post.file.endsWith('.mp4') || post.file.endsWith('.mov');
+
+    if (isAudio) {
+      return (
+        <Video
+          source={{ uri: mediaUri }}
+          useNativeControls
+          style={styles.audio}
+        />
+      );
+    } else if (isVideo) {
+      return (
+        <Video
+          source={{ uri: mediaUri }}
+          useNativeControls
+          style={styles.video}
+          isLooping
+        />
+      );
+    }
+
+    return null;
+  };
+
   return (
     <View style={styles.container}>
-      {/* Back Button */}
       <Appbar.Header style={{ backgroundColor: '#121212' }}>
         <Appbar.BackAction onPress={() => router.back()} />
         <Appbar.Content title="Post Detail" />
@@ -60,6 +91,9 @@ const PostDetail: React.FC = () => {
 
       <ScrollView contentContainerStyle={styles.scrollView}>
         <PostCard post={post} onUpdate={setPost} showActions />
+
+        {/* ✅ Render media directly under post */}
+        {renderMedia()}
 
         {user && (
           <Card style={styles.commentCard}>
@@ -158,6 +192,18 @@ const styles = StyleSheet.create({
     color: '#aaaaaa',
     textAlign: 'center',
     marginTop: 16,
+  },
+  video: {
+    width: '100%',
+    height: 250,
+    borderRadius: 12,
+    marginBottom: 16,
+  },
+  audio: {
+    width: '100%',
+    height: 70,
+    borderRadius: 12,
+    marginBottom: 16,
   },
 });
 

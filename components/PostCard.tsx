@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Image, Alert } from 'react-native';
 import { Button, Avatar, Divider, Card } from 'react-native-paper';
 import { useNavigation } from '@react-navigation/native';
@@ -9,6 +9,7 @@ import { RootStackParamList } from '@/types/navigation';
 import { REACT_APP_API_URL } from '@/constants/env';
 import { useRouter } from 'expo-router';
 import { useLocalSearchParams } from 'expo-router';
+import { Audio, Video, ResizeMode } from 'expo-av';
 
 interface PostCardProps {
   post: any;
@@ -21,35 +22,52 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, showActions = true,
   const { user } = useContext(AuthContext);
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const router = useRouter();
-const { id: postId } = useLocalSearchParams();
+  const { id: postId } = useLocalSearchParams();
+  const [isPlaying, setIsPlaying] = useState(false);
+  const soundRef = useRef<Audio.Sound | null>(null);
 
-  // Handle Like Action
+  const avatarUrl = post.user?.profile?.avatar
+    ? `${REACT_APP_API_URL}/${post.user.profile.avatar}`
+    : 'https://via.placeholder.com/40';
+
+  const fileUrl = `${REACT_APP_API_URL}/uploads/${post.file}`;
+
   const handleLike = async () => {
     if (!user) return Alert.alert('Login Required', 'Please login to like posts.');
     try {
       const response = await api.post(`/api/posts/${post._id}/like`);
-      // Update the post with the new data, keeping the user info intact
-      onUpdate?.({
-        ...response.data,
-        user: post.user, // Ensuring that the post user info is preserved
-      });
+      onUpdate?.({ ...response.data, user: post.user });
     } catch (err) {
       console.error('Error liking post:', err);
     }
   };
 
-  // Handle Comment Action
   const handleComment = () => {
     if (!user) return Alert.alert('Login Required', 'Please login to comment.');
     router.push({ pathname: '/post/[id]', params: { id: post._id } });
   };
 
-  // Avatar and Username
-  const avatarUrl = post.user?.profile?.avatar
-    ? `${REACT_APP_API_URL}/${post.user.profile.avatar}`
-    : 'https://via.placeholder.com/40';
-
-  const fileUrl = `${REACT_APP_API_URL}/${post.file}`;
+  const toggleAudio = async () => {
+    try {
+      if (!soundRef.current) {
+        const { sound } = await Audio.Sound.createAsync({ uri: fileUrl });
+        soundRef.current = sound;
+        await sound.playAsync();
+        setIsPlaying(true);
+      } else {
+        const status = await soundRef.current.getStatusAsync();
+        if (status.isLoaded && status.isPlaying) {
+          await soundRef.current.pauseAsync();
+          setIsPlaying(false);
+        } else {
+          await soundRef.current.playAsync();
+          setIsPlaying(true);
+        }
+      }
+    } catch (err) {
+      console.error('Audio error:', err);
+    }
+  };
 
   return (
     <Card style={styles.card}>
@@ -62,10 +80,7 @@ const { id: postId } = useLocalSearchParams();
               if (post.user?.id === user?.id) {
                 router.push('/tabs/account');
               } else {
-                router.push({
-                  pathname: '/profile/[id]',
-                  params: { id: post.user._id },
-                });
+                router.push({ pathname: '/profile/[id]', params: { id: post.user._id } });
               }
             }}
           >
@@ -87,7 +102,17 @@ const { id: postId } = useLocalSearchParams();
       {post.file && (
         <View style={styles.media}>
           {post.file.endsWith('.mp3') || post.file.endsWith('.wav') ? (
-            <Text style={styles.audioPlaceholder}>🎧 Audio file (open post to play)</Text>
+            <Button mode="outlined" onPress={toggleAudio}>
+              {isPlaying ? 'Pause Audio' : 'Play Audio'}
+            </Button>
+          ) : post.file.endsWith('.mp4') || post.file.endsWith('.mov') ? (
+            <Video
+              source={{ uri: fileUrl }}
+              style={styles.mediaVideo}
+              useNativeControls
+              resizeMode={ResizeMode.CONTAIN}
+              isLooping
+            />
           ) : (
             <Image source={{ uri: fileUrl }} style={styles.mediaImage} />
           )}
@@ -172,12 +197,13 @@ const styles = StyleSheet.create({
   mediaImage: {
     width: '100%',
     height: 200,
-    resizeMode: 'contain',
     borderRadius: 8,
   },
-  audioPlaceholder: {
-    color: '#cccccc',
-    fontStyle: 'italic',
+  mediaVideo: {
+    width: '100%',
+    height: 200,
+    borderRadius: 8,
+    backgroundColor: '#000',
   },
   actions: {
     flexDirection: 'row',
