@@ -1,44 +1,31 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 
-type Message = {
-  content: string;
-  timestamp: string;
-  sender: {
-    _id: string;
-    username: string;
-    profile?: {
-      avatar?: string;
-    };
-  };
-};
+const MessageItem = ({ message, userId }: { message: any; userId: string }) => {
+  const isCurrentUser = message.sender._id === userId;
 
-type Props = {
-  message: Message;
-  userId: string;
-};
-
-const MessageItem: React.FC<Props> = ({ message, userId }) => {
-  const isSent = message.sender._id === userId;
+  const formattedTime = new Date(message.createdAt).toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
 
   return (
-    <View style={[styles.container, isSent ? styles.sent : styles.received]}>
-      <Image
-        source={
-          message.sender?.profile?.avatar
-            ? { uri: message.sender.profile.avatar }
-            : require('../assets/images/icon.png')
-        }
-        style={styles.avatar}
-      />
-      <View style={[styles.bubble, isSent ? styles.bubbleSent : styles.bubbleReceived]}>
-        <Text style={[styles.username, isSent ? styles.usernameSent : styles.usernameReceived]}>
-          {message.sender?.username || 'Unknown'}
-        </Text>
-        <Text style={styles.content}>{message.content}</Text>
-        <Text style={styles.timestamp}>
-          {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-        </Text>
+    <View
+      style={[
+        styles.messageContainer,
+        isCurrentUser ? styles.rightAlign : styles.leftAlign,
+      ]}
+    >
+      <View style={styles.bubbleContainer}>
+        <View
+          style={[
+            styles.messageBubble,
+            isCurrentUser ? styles.currentUserBubble : styles.otherUserBubble,
+          ]}
+        >
+          <Text style={styles.messageText}>{message.content}</Text>
+        </View>
+        <Text style={styles.timestamp}>{ new Date(message.timestamp).toLocaleTimeString()}</Text>
       </View>
     </View>
   );
@@ -47,55 +34,42 @@ const MessageItem: React.FC<Props> = ({ message, userId }) => {
 export default MessageItem;
 
 const styles = StyleSheet.create({
-  container: {
+  messageContainer: {
+    marginVertical: 4,
+    paddingHorizontal: 10,
     flexDirection: 'row',
-    marginBottom: 12,
-    alignItems: 'flex-end',
+    width: '100%',
   },
-  sent: {
-    justifyContent: 'flex-end',
-    flexDirection: 'row-reverse',
-  },
-  received: {
+  leftAlign: {
     justifyContent: 'flex-start',
   },
-  avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    marginHorizontal: 8,
+  rightAlign: {
+    justifyContent: 'flex-end',
   },
-  bubble: {
-    maxWidth: '70%',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+  bubbleContainer: {
+    alignItems: 'flex-start',
+  },
+  messageBubble: {
+    maxWidth: '100%',
+    padding: 10,
     borderRadius: 12,
   },
-  bubbleSent: {
-    backgroundColor: '#1976d2', // Blue
+  currentUserBubble: {
+    backgroundColor: '#2979ff',
+    borderTopRightRadius: 0,
   },
-  bubbleReceived: {
-    backgroundColor: '#333', // Dark gray
+  otherUserBubble: {
+    backgroundColor: '#333',
+    borderTopLeftRadius: 0,
   },
-  username: {
-    fontWeight: '600',
-    fontSize: 13,
-    marginBottom: 2,
-  },
-  usernameSent: {
-    color: '#fff',
-  },
-  usernameReceived: {
-    color: '#ddd',
-  },
-  content: {
+  messageText: {
     color: '#fff',
     fontSize: 15,
   },
   timestamp: {
-    fontSize: 10,
     color: '#aaa',
-    marginTop: 4,
-    textAlign: 'right',
+    fontSize: 10,
+    marginTop: 2,
+    marginLeft: 4,
   },
 });

@@ -1,32 +1,34 @@
-import React, { useState, useEffect, useContext } from 'react';
+import MessageItem from '@/components/MessageItem';
+import React, { useContext, useEffect, useState } from 'react';
 import {
-  View,
-  Text,
-  TextInput,
-  StyleSheet,
   FlatList,
-  TouchableOpacity,
-  ScrollView,
   KeyboardAvoidingView,
   Platform,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  useWindowDimensions,
+  View,
 } from 'react-native';
+import { Appbar, Drawer, List } from 'react-native-paper';
 import { AuthContext } from '../../contexts/AuthContext';
 import api from '../../utils/api';
-import { useWindowDimensions } from 'react-native';
-import ConversationList from '@/components/ConversationList';
-import MessageButton from '@/components/MessageButton';
-import MessageItem from '@/components/MessageItem';
+import { Ionicons } from '@expo/vector-icons';
 
-const MessengesScreen = () => {
+const MessagesScreen = () => {
   const { user, socket } = useContext(AuthContext);
   const [conversations, setConversations] = useState<any[]>([]);
   const [selectedConv, setSelectedConv] = useState<string | null>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [content, setContent] = useState('');
+  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [users, setUsers] = useState<any[]>([]); // To store all users
 
   const isMobile = useWindowDimensions().width < 768;
 
   useEffect(() => {
+    // Fetch all conversations
     const fetchConversations = async () => {
       try {
         const res = await api.get('/api/messages/conversations');
@@ -39,7 +41,18 @@ const MessengesScreen = () => {
       }
     };
     fetchConversations();
-  }, []);
+
+    // Fetch all users (excluding the current logged-in user)
+    const fetchUsers = async () => {
+      try {
+        const res = await api.get('/api/users'); // Endpoint to get all users
+        setUsers(res.data.filter((u: any) => u._id !== user?.id)); // Exclude current user
+      } catch (err) {
+        console.error('Error fetching users:', err);
+      }
+    };
+    fetchUsers();
+  }, [selectedConv, user]);
 
   useEffect(() => {
     if (selectedConv) {
@@ -75,35 +88,85 @@ const MessengesScreen = () => {
     }
   };
 
+  const handleStartConversation = async (recipientId: string) => {
+    try {
+      const res = await api.post('/api/messages/conversation', { recipientId });
+      setSelectedConv(res.data._id);
+    } catch (err) {
+      console.error('Error starting conversation:', err);
+    }
+  };
+
+  const renderDrawer = () => (
+    <Drawer.Section style={styles.drawer}>
+      <FlatList
+        data={users} // Display all registered users excluding the current user
+        keyExtractor={(item) => item._id} // Ensuring unique keys
+        renderItem={({ item }) => {
+          // Find the latest message in the user's conversation
+          const conversation = conversations.find(
+            (conv) => conv.participants.some((p: any) => p._id === item._id)
+          );
+          const latestMessage =
+            conversation && conversation.messages?.length > 0
+              ? conversation.messages.slice(-1)[0].content
+              : 'No messages yet';
+
+          return (
+            <List.Item
+              title={item.username}
+              description={latestMessage}
+              onPress={() => {
+                // Set selected conversation for the user
+                if (!conversation) {
+                  // No conversation exists, so start one
+                  handleStartConversation(item._id);
+                } else {
+                  setSelectedConv(conversation._id);
+                }
+                setDrawerVisible(false);
+              }}
+              style={styles.drawerItem}
+              titleStyle={{ color: '#fff' }}
+              descriptionStyle={{ color: '#ccc' }}
+            />
+          );
+        }}
+      />
+    </Drawer.Section>
+  );
+
   return (
     <KeyboardAvoidingView
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       style={styles.container}
     >
-      <View style={styles.row}>
-        {/* Sidebar */}
-        {!isMobile && (
-          <View style={styles.sidebar}>
-            <ConversationList conversations={conversations} onSelect={setSelectedConv} />
-            <MessageButton
-              onNewConversation={(conv) => {
-                setSelectedConv(conv._id);
-                setMessages(conv.messages || []);
-                setConversations((prev) => [conv, ...prev.filter((c) => c._id !== conv._id)]);
-              }}
-            />
-          </View>
-        )}
+      {isMobile && (
+        <Appbar.Header style={{ backgroundColor: '#1e1e1e' }}>
+          <Appbar.Action icon="menu" onPress={() => setDrawerVisible(!drawerVisible)} />
+          <Appbar.Content title="Messages" titleStyle={{ color: '#fff' }} />
+        </Appbar.Header>
+      )}
 
-        {/* Main Messaging View */}
+      <View style={styles.row}>
+        {!isMobile && <View style={styles.sidebar}>{renderDrawer()}</View>}
+
         <View style={[styles.chatArea, isMobile && { width: '100%' }]}>
-          <Text style={styles.title}>Messages</Text>
+          {isMobile && drawerVisible && (
+            <View style={styles.drawerOverlay}>
+              <View style={styles.drawerPanel}>{renderDrawer()}</View>
+              <TouchableOpacity
+                style={styles.drawerBackdrop}
+                onPress={() => setDrawerVisible(false)}
+              />
+            </View>
+          )}
 
           {selectedConv ? (
             <>
               <FlatList
                 data={messages}
-                keyExtractor={(_, idx) => idx.toString()}
+                keyExtractor={(item) => item._id || item.timestamp} // Ensuring unique key
                 renderItem={({ item }) => (
                   <MessageItem message={item} userId={user?.id || ''} />
                 )}
@@ -118,7 +181,7 @@ const MessengesScreen = () => {
                   onChangeText={setContent}
                 />
                 <TouchableOpacity style={styles.sendButton} onPress={handleSend}>
-                  <Text style={styles.sendText}>Send</Text>
+                  <Ionicons name="send" size={20} color="white" />
                 </TouchableOpacity>
               </View>
             </>
@@ -131,7 +194,7 @@ const MessengesScreen = () => {
   );
 };
 
-export default MessengesScreen;
+export default MessagesScreen;
 
 const styles = StyleSheet.create({
   container: {
@@ -153,13 +216,6 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
-  title: {
-    color: '#fff',
-    fontSize: 24,
-    marginBottom: 16,
-    marginTop: 20,
-    fontWeight: 'bold',
-  },
   messageList: {
     paddingBottom: 16,
   },
@@ -170,6 +226,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#333',
     paddingTop: 8,
     marginTop: 8,
+    width: '80%',
   },
   input: {
     flex: 1,
@@ -187,13 +244,37 @@ const styles = StyleSheet.create({
     backgroundColor: '#2979ff',
     borderRadius: 8,
   },
-  sendText: {
-    color: '#fff',
-    fontWeight: '600',
-  },
   empty: {
     color: '#aaa',
     fontSize: 16,
     marginTop: 32,
+  },
+  drawer: {
+    backgroundColor: '#1e1e1e',
+    paddingVertical: 12,
+  },
+  drawerItem: {
+    borderBottomColor: '#333',
+    borderBottomWidth: 1,
+  },
+  drawerOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    flexDirection: 'row',
+    zIndex: 10,
+  },
+  drawerPanel: {
+    width: 260,
+    backgroundColor: '#1e1e1e',
+    borderRightColor: '#333',
+    borderRightWidth: 1,
+    zIndex: 11,
+  },
+  drawerBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
 });
