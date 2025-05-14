@@ -81,6 +81,7 @@ const RanksScreen = () => {
 
   const renderItem = ({ item, index }: { item: any; index: number }) => {
     const { post, finalScore, userScore, judgeScore } = item;
+    console.log(post._id)
     return (
       <Card key={post._id} style={styles.card}>
         <Card.Content>
@@ -90,13 +91,22 @@ const RanksScreen = () => {
     : 'https://via.placeholder.com/40' }} />
                   <View style={styles.userInfo}>
                     <Text style={styles.username}>{post.user.username}</Text>
-                    <TouchableOpacity onPress={() => {
-            if (post.user._id === user?._id) {
-              router.push('/tabs/account');
-            } 
-          }}>
-            <Text style={styles.viewProfile}>View Profile</Text>
-          </TouchableOpacity>
+                    <TouchableOpacity
+  onPress={() => {
+    if (post.user?.id === user?.id) {
+      router.push('/tabs/account');
+    } else {
+      router.push({
+        pathname: '/profile/[id]',
+        params: { id: post.user._id },
+      });
+    }
+  }}
+>
+  <Text style={styles.viewProfile}>View Profile</Text>
+</TouchableOpacity>
+
+
           
                   </View>
                   <Text style={styles.score}>

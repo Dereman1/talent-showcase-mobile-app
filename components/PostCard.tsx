@@ -48,13 +48,20 @@ const router = useRouter();
         <Avatar.Image size={40} source={{ uri: avatarUrl }} />
         <View style={styles.userInfo}>
           <Text style={styles.username}>{post.user.username}</Text>
-          <TouchableOpacity onPress={() => {
-  if (post.user._id === user?._id) {
-    router.push('/tabs/account');
-  } 
-}}>
-  <Text style={styles.viewProfile}>View Profile</Text>
-</TouchableOpacity>
+        <TouchableOpacity
+          onPress={() => {
+            if (post.user?.id === user?.id) {
+              router.push('/tabs/account');
+            } else {
+              router.push({
+                pathname: '/profile/[id]',
+                params: { id: post.user._id },
+              });
+            }
+          }}
+        >
+          <Text style={styles.viewProfile}>View Profile</Text>
+        </TouchableOpacity>
 
         </View>
       </View>

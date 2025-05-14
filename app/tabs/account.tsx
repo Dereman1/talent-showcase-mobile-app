@@ -111,7 +111,7 @@ const Account = () => {
             Change Avatar
           </Button>
           <Title style={{ color: 'white', marginTop: 4 }}>{profile.username}</Title>
-          <Text style={{ color: 'gray' }}>{profile.profile?.bio}</Text>
+          <Text style={{ color: 'gray', textAlign: 'center' }}>{profile.profile?.bio}</Text>
         </Card.Content>
       </Card>
 
