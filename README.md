@@ -1,50 +1,113 @@
-# Welcome to your Expo app 👋
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+### 📱 Art Showcase Mobile App – README
 
-## Get started
+This is the official mobile version of the **Art Showcase Platform**, built using **React Native**, **Expo**, and **TypeScript**. It connects to a local backend server (Node.js + MongoDB) and mirrors the key features of the web app: art posting, social interaction, ranking, messaging, and real-time notifications.
 
-1. Install dependencies
+---
 
-   ```bash
-   npm install
-   ```
+### 📦 Tech Stack
 
-2. Start the app
+* **React Native** with **Expo**
+* **TypeScript**
+* **React Native Paper** for UI
+* **Socket.IO** for real-time messaging and notifications
+* **Axios** for HTTP requests
 
-   ```bash
-   npx expo start
-   ```
+---
 
-In the output, you'll find options to open the app in a
+### 🚀 Getting Started
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+#### 1. **Clone the repo**
 
 ```bash
-npm run reset-project
+git clone https://github.com/yourusername/art-showcase-mobile.git
+cd art-showcase-mobile
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+#### 2. **Install dependencies**
 
-## Learn more
+```bash
+npm install
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+---
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### 🔗 Backend Configuration
 
-## Join the community
+Since the backend runs locally, you must provide your local machine’s IP address to the mobile app.
 
-Join our community of developers creating universal apps.
+#### 👉 Create `constants/env.ts`
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Create a file called `constants/env.ts` in the root or appropriate config folder:
+
+```ts
+// constants/env.ts
+
+// Replace YOUR_IP_ADDRESS with your actual local IP address
+export const APP_URL = 'http://YOUR_IP_ADDRESS:4000';
+```
+
+📌 **Tip:**
+You can get your IP address using:
+
+* **macOS/Linux:** `ifconfig`
+* **Windows:** `ipconfig`
+
+Make sure both your **mobile device and backend server** are on the **same local network**.
+
+---
+
+### ▶️ Running the App
+
+Start the Expo development server:
+
+```bash
+npx expo start
+```
+
+* Scan the QR code with your Expo Go app.
+* Or run on an emulator.
+
+---
+
+### 📁 Project Structure (simplified)
+
+```
+.
+├── app/
+│   ├── tabs/               # Tab screens (Home, Ranks, Messages, etc.)
+│── components/         # Reusable UI components
+│── services/           # API calls
+│── contexts/           # Auth and global contexts
+│── constants/env.ts    # API base URL (local IP)
+│── utils/              # Helper functions
+├── assets/
+├── App.tsx
+├── app.json
+└── tsconfig.json
+```
+
+---
+
+### 🔐 Features
+
+* 🔐 Authentication with JWT
+* 🎨 Post art (image, video, or audio)
+* ❤️ Like, comment, and evaluate art
+* 🏆 View rankings
+* 💬 Real-time chat
+* 🔔 Notifications
+
+---
+
+### 🛠 Troubleshooting
+
+* **404 errors for media:** Make sure your backend serves static files from the `uploads` folder:
+
+```js
+// In your Express app (e.g., server.js)
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+```
+
+* **Socket.IO issues:** Ensure your backend Socket.IO is correctly initialized and the client is using the same IP/port.
+
