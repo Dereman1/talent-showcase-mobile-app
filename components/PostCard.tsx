@@ -30,7 +30,7 @@ const PostCard: React.FC<PostCardProps> = ({ post, onUpdate, showActions = true,
     ? `${REACT_APP_API_URL}/${post.user.profile.avatar}`
     : 'https://via.placeholder.com/40';
 
-  const fileUrl = `${REACT_APP_API_URL}/uploads/${post.file}`;
+  const fileUrl = `${REACT_APP_API_URL}/${post.file}`;
 
   const handleLike = async () => {
     if (!user) return Alert.alert('Login Required', 'Please login to like posts.');
